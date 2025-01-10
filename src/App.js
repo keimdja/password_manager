@@ -12,16 +12,49 @@
 
 // export default App;
 
+// import React from 'react';
+// import Login from './Login';
+
+// function App() {
+//   return (
+//     <div>
+//       <Login />
+//     </div>
+//   );
+// }
+
+// export default App;
+
+// import React from 'react';
+// import Dashboard from './dashboard';
+
+// function App() {
+//   return (
+//     <div className="App">
+//       <Dashboard />
+//     </div>
+//   );
+// }
+
+// export default App;
+
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './Login';
+import Dashboard from './dashboard';
 
 function App() {
-  return (
-    <div>
-      <Login />
-    </div>
-  );
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<Login />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+            </Routes>
+        </Router>
+    );
 }
 
 export default App;
+
+
 
