@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/password_manager/static/css/main.e6c13ad2.css",
-    "main.js": "/password_manager/static/js/main.73e4adee.js",
+    "main.js": "/password_manager/static/js/main.a5fba16a.js",
     "static/media/background-graphic-design.png": "/password_manager/static/media/background-graphic-design.4bd770cf9df258f02c1a.png",
     "static/media/LogoSaveAPass.png": "/password_manager/static/media/LogoSaveAPass.24dee8a952e19c1b325c.png",
     "index.html": "/password_manager/index.html",
     "main.e6c13ad2.css.map": "/password_manager/static/css/main.e6c13ad2.css.map",
-    "main.73e4adee.js.map": "/password_manager/static/js/main.73e4adee.js.map"
+    "main.a5fba16a.js.map": "/password_manager/static/js/main.a5fba16a.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.73e4adee.js"
+    "static/js/main.a5fba16a.js"
   ]
 }
