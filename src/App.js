@@ -40,8 +40,11 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './Login';
-import Dashboard from './dashboard';
+import Login from './components/Login';
+import Dashboard from './components/dashboard';
+import EditPasswordDialog from './components/EditPasswordDialog';
+import Settings from './components/Settings'; // Import the Settings component
+
 
 function App() {
     return (
@@ -49,6 +52,8 @@ function App() {
             <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/edit-password" element={<EditPasswordDialog />} />
+                <Route path="/settings" element={<Settings />} /> {/* Add the Settings route */}
             </Routes>
         </Router>
     );

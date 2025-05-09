@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'; // Import Firestore
+import { getFirestore, query, where } from 'firebase/firestore'; // Add query and where here
 
 const firebaseConfig = {
   apiKey: "AIzaSyAS-xvjza2TpR1dhjCJ20bkifWd_5D5RiY",
@@ -13,13 +13,10 @@ const firebaseConfig = {
   measurementId: "G-PDN6067ZJV"
 };
 
-
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+const auth = getAuth(app); // Get auth instance from the initialized app
+console.log(auth);
+const db = getFirestore(app); 
 
-const auth = getAuth(app);
-
-// Initialize Firestore
-const db = getFirestore(app); // Initialize Firestore database reference
-
-export { auth, db };
+export { auth, db, app, query, where }; // Export query and where
