@@ -16,10 +16,12 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
+    // Generate a 256-bit random key
     const generateRandomSecretKey = () => {
-        return CryptoJS.lib.WordArray.random(32).toString(); // Generate a 256-bit random key
+        return CryptoJS.lib.WordArray.random(32).toString(); 
     };
 
+    // Encrypt the secret key using AES encryption
     const encryptSecretKey = (secretKey, password) => {
         return CryptoJS.AES.encrypt(secretKey, password).toString();
     };
@@ -29,6 +31,8 @@ function Login() {
         setLoading(true);
         setError('');
         try {
+
+            //if user is signing up
             if (isSignUp) {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
@@ -44,7 +48,9 @@ function Login() {
                 });
 
                 navigate('/dashboard');
-            } else {
+            } 
+            //if user is logging in
+            else {
                 await signInWithEmailAndPassword(auth, email, password);
                 navigate('/dashboard');
             }

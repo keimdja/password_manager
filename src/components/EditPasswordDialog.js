@@ -24,43 +24,109 @@ const EditPasswordDialog = ({ open, onClose, selectedPassword }) => {
     const [openDecryptDialog, setOpenDecryptDialog] = useState(false);
     const [decryptPasswordInput, setDecryptPasswordInput] = useState('');
     const [decryptError, setDecryptError] = useState('');
-    
 
+
+    // useEffect(() => {
+    //     if (selectedPassword) {
+    //         setService(selectedPassword.serviceName);
+    //         setUsername(selectedPassword.usernameOrEmail);
+    //         setPassword(''); // clear the password to avoid displaying the unencrypted password.
+    //     }
+    // }, [selectedPassword]);
+
+    // const handlePasswordVisibility = () => {
+    //     setShowPassword(!showPassword);
+    // };
+
+    // const generateSecurePassword = () => {
+    //     const newPassword = Math.random().toString(36).slice(-8);
+    //     setPassword(newPassword);
+    // };
+
+    // const handleSavePassword = () => {
+    //     setOpenDecryptDialog(true);
+    // };
+
+    // const handleDecryptAndSave = async () => {
+    //     setDecryptError('');
+    //     const userId = auth.currentUser?.uid;
+
+    //     try {
+    //         const secretKeyDoc = await getDocs(query(collection(db, 'userSecrets'), where('userId', '==', userId)));
+    //         if (secretKeyDoc.empty) {
+    //             setDecryptError('Secret key not found.');
+    //             return;
+    //         }
+
+    //         const secretKeyData = secretKeyDoc.docs[0].data();
+    //         const encryptedSecretKey = secretKeyData.encryptedSecretKey;
+
+    //         const decryptedSecretKey = CryptoJS.AES.decrypt(encryptedSecretKey, decryptPasswordInput).toString(CryptoJS.enc.Utf8);
+
+    //         if (!decryptedSecretKey) {
+    //             setDecryptError('Incorrect password.');
+    //             return;
+    //         }
+
+    //         const encryptedPassword = CryptoJS.AES.encrypt(password, decryptedSecretKey).toString();
+
+    //         const passwordRef = doc(db, 'passwordVault', selectedPassword.id);
+    //         await updateDoc(passwordRef, {
+    //             serviceName: service,
+    //             usernameOrEmail: username,
+    //             encryptedPassword,
+    //         });
+
+    //         alert('Password updated successfully!');
+    //         onClose();
+    //         setOpenDecryptDialog(false);
+    //     } catch (error) {
+    //         console.error('Error updating password:', error);
+    //         setDecryptError('Failed to update the password. Please try again.');
+    //     }
+    // };
+
+    // When a password entry is selected for editing, pre-fill the form fields
     useEffect(() => {
         if (selectedPassword) {
-            setService(selectedPassword.serviceName);
-            setUsername(selectedPassword.usernameOrEmail);
-            setPassword(''); // clear the password to avoid displaying the unencrypted password.
+            setService(selectedPassword.serviceName);               // Pre-fill the service name
+            setUsername(selectedPassword.usernameOrEmail);          // Pre-fill the username or email
+            setPassword(''); // Clear the password to avoid displaying the unencrypted value
         }
     }, [selectedPassword]);
 
+    // Toggles the visibility of the password input field
     const handlePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
 
+    // Generates a random 8-character password and sets it in the form
     const generateSecurePassword = () => {
-        const newPassword = Math.random().toString(36).slice(-8);
+        const newPassword = Math.random().toString(36).slice(-8); // Simple password generator
         setPassword(newPassword);
     };
 
+    // Opens the dialog asking the user to confirm their password before saving changes
     const handleSavePassword = () => {
         setOpenDecryptDialog(true);
     };
 
+    // Handles password decryption and saving the updated password to Firestore
     const handleDecryptAndSave = async () => {
         setDecryptError('');
         const userId = auth.currentUser?.uid;
 
         try {
+            // Retrieve the user's encrypted secret key from Firestore
             const secretKeyDoc = await getDocs(query(collection(db, 'userSecrets'), where('userId', '==', userId)));
             if (secretKeyDoc.empty) {
                 setDecryptError('Secret key not found.');
                 return;
             }
 
+            // Decrypt the user's secret key using the password they entered
             const secretKeyData = secretKeyDoc.docs[0].data();
             const encryptedSecretKey = secretKeyData.encryptedSecretKey;
-
             const decryptedSecretKey = CryptoJS.AES.decrypt(encryptedSecretKey, decryptPasswordInput).toString(CryptoJS.enc.Utf8);
 
             if (!decryptedSecretKey) {
@@ -68,8 +134,10 @@ const EditPasswordDialog = ({ open, onClose, selectedPassword }) => {
                 return;
             }
 
+            // Encrypt the updated password using the decrypted secret key
             const encryptedPassword = CryptoJS.AES.encrypt(password, decryptedSecretKey).toString();
 
+            // Update the Firestore document with the new values
             const passwordRef = doc(db, 'passwordVault', selectedPassword.id);
             await updateDoc(passwordRef, {
                 serviceName: service,
@@ -77,14 +145,16 @@ const EditPasswordDialog = ({ open, onClose, selectedPassword }) => {
                 encryptedPassword,
             });
 
+            // Notify the user and close the dialog
             alert('Password updated successfully!');
-            onClose();
-            setOpenDecryptDialog(false);
+            onClose();                     // Close the Edit dialog
+            setOpenDecryptDialog(false);   // Close the Decryption dialog
         } catch (error) {
             console.error('Error updating password:', error);
             setDecryptError('Failed to update the password. Please try again.');
         }
     };
+
 
     return (
         <>

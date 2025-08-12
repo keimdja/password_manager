@@ -44,25 +44,144 @@ const PasswordVault = () => {
 
 
 
+    //     const decryptPassword = async (encryptedPassword, userPassword) => {
+    //         try {
+    //             const userId = auth.currentUser?.uid;
+    //             const secretKeyDoc = await getDocs(query(collection(db, 'userSecrets'), where('userId', '==', userId)));
+    //             if (secretKeyDoc.empty) {
+    //                 setDecryptError('Secret key not found.');
+    //                 return null;
+    //             }
+
+    //             const secretKeyData = secretKeyDoc.docs[0].data();
+    //             const encryptedSecretKey = secretKeyData.encryptedSecretKey;
+
+    //             const decryptedSecretKey = CryptoJS.AES.decrypt(encryptedSecretKey, userPassword).toString(CryptoJS.enc.Utf8);
+
+    //             if (!decryptedSecretKey) {
+    //                 setDecryptError('Incorrect password.');
+    //                 return null;
+    //             }
+
+    //             const bytes = CryptoJS.AES.decrypt(encryptedPassword, decryptedSecretKey);
+    //             return bytes.toString(CryptoJS.enc.Utf8) || '';
+    //         } catch (error) {
+    //             console.error('Decryption error:', error);
+    //             setDecryptError('Decryption failed.');
+    //             return null;
+    //         }
+    //     };
+
+    //     useEffect(() => {
+    //         const user = auth.currentUser;
+    //         if (!user) {
+    //             console.warn('No authenticated user found.');
+    //             return;
+    //         }
+
+    //         const passwordsRef = collection(db, 'passwordVault');
+    //         const q = query(passwordsRef, where('userId', '==', user.uid));
+
+    //         const unsubscribe = onSnapshot(q, (snapshot) => {
+    //             const passwordsData = snapshot.docs.map((doc) => ({
+    //                 id: doc.id,
+    //                 ...doc.data(),
+    //             }));
+    //             setPasswords(passwordsData);
+    //         });
+
+    //         return () => unsubscribe();
+    //     }, []);
+
+    //     const toggleViewPassword = async (entry) => {
+    //         if (viewPassword[entry.id]) {
+    //             setViewPassword((prev) => ({ ...prev, [entry.id]: false }));
+    //         } else {
+    //             setPasswordToView(entry);
+    //             setOpenDecryptDialog(true);
+    //         }
+    //     };
+
+    //     const handleDecryptPassword = async () => {
+    //         setDecryptError('');
+    //         const decrypted = await decryptPassword(passwordToView.encryptedPassword, decryptPasswordInput);
+
+    //         if (decrypted) {
+    //             setViewPassword((prev) => ({ ...prev, [passwordToView.id]: decrypted }));
+    //             setOpenDecryptDialog(false);
+    //             setDecryptPasswordInput('');
+    //         }
+    //     };
+
+    //     const handleEdit = (entry) => {
+    //         setSelectedPassword(entry);
+    //         setOpenEditDialog(true);
+    //     };
+
+    //     const promptDeletePassword = (id) => {
+    //         setItemToDeleteId(id);
+    //         setPasswordToConfirmDelete('');
+    //         setDeleteError('');
+    //         setOpenDeleteDialog(true);
+    //     };
+
+
+
+    // const handleConfirmDelete = async () => {
+    //     const user = auth.currentUser;
+
+    //     if (!passwordToConfirmDelete) {
+    //         setDeleteError('Password is required.');
+    //         return;
+    //     }
+
+    //     const credential = EmailAuthProvider.credential(user.email, passwordToConfirmDelete);
+
+    //     try {
+    //         await reauthenticateWithCredential(user, credential);
+    //         await deleteDoc(doc(db, 'passwordVault', itemToDeleteId));
+    //         setPasswords(passwords.filter((password) => password.id !== itemToDeleteId));
+    //         setOpenDeleteDialog(false);
+    //     } catch (error) {
+    //         console.error('Error during reauthentication or deletion:', error);
+    //         setDeleteError('Incorrect password or failed to delete. Please try again.');
+    //     }
+    // };
+
+    // Function to decrypt a stored password using the user's account password
     const decryptPassword = async (encryptedPassword, userPassword) => {
         try {
+            // Get the currently logged-in user's UID
             const userId = auth.currentUser?.uid;
-            const secretKeyDoc = await getDocs(query(collection(db, 'userSecrets'), where('userId', '==', userId)));
+
+            // Fetch the user's encrypted secret key from Firestore
+            const secretKeyDoc = await getDocs(
+                query(collection(db, 'userSecrets'), where('userId', '==', userId))
+            );
+
+            // If no key is found, set error and return
             if (secretKeyDoc.empty) {
                 setDecryptError('Secret key not found.');
                 return null;
             }
 
+            // Extract the encrypted secret key from Firestore document
             const secretKeyData = secretKeyDoc.docs[0].data();
             const encryptedSecretKey = secretKeyData.encryptedSecretKey;
 
-            const decryptedSecretKey = CryptoJS.AES.decrypt(encryptedSecretKey, userPassword).toString(CryptoJS.enc.Utf8);
+            // Attempt to decrypt the secret key using the user's account password
+            const decryptedSecretKey = CryptoJS.AES.decrypt(
+                encryptedSecretKey,
+                userPassword
+            ).toString(CryptoJS.enc.Utf8);
 
+            // If decryption fails, set error and return
             if (!decryptedSecretKey) {
                 setDecryptError('Incorrect password.');
                 return null;
             }
 
+            // Use the decrypted secret key to decrypt the stored password
             const bytes = CryptoJS.AES.decrypt(encryptedPassword, decryptedSecretKey);
             return bytes.toString(CryptoJS.enc.Utf8) || '';
         } catch (error) {
@@ -72,6 +191,7 @@ const PasswordVault = () => {
         }
     };
 
+    // Load all passwords belonging to the current user when the component mounts
     useEffect(() => {
         const user = auth.currentUser;
         if (!user) {
@@ -79,9 +199,11 @@ const PasswordVault = () => {
             return;
         }
 
+        // Reference to the 'passwordVault' collection filtered by userId
         const passwordsRef = collection(db, 'passwordVault');
         const q = query(passwordsRef, where('userId', '==', user.uid));
 
+        // Listen for real-time updates from Firestore
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const passwordsData = snapshot.docs.map((doc) => ({
                 id: doc.id,
@@ -90,63 +212,90 @@ const PasswordVault = () => {
             setPasswords(passwordsData);
         });
 
+        // Clean up Firestore listener when component unmounts
         return () => unsubscribe();
     }, []);
 
+    // Toggle visibility of a password (triggers decryption if not already viewed)
     const toggleViewPassword = async (entry) => {
         if (viewPassword[entry.id]) {
+            // If already visible, hide the password
             setViewPassword((prev) => ({ ...prev, [entry.id]: false }));
         } else {
+            // Otherwise, prepare to decrypt and show password
             setPasswordToView(entry);
-            setOpenDecryptDialog(true);
+            setOpenDecryptDialog(true); // Open password confirmation dialog
         }
     };
 
+    // Handle decryption dialog confirmation
     const handleDecryptPassword = async () => {
         setDecryptError('');
-        const decrypted = await decryptPassword(passwordToView.encryptedPassword, decryptPasswordInput);
+
+        // Decrypt password using user input
+        const decrypted = await decryptPassword(
+            passwordToView.encryptedPassword,
+            decryptPasswordInput
+        );
 
         if (decrypted) {
-            setViewPassword((prev) => ({ ...prev, [passwordToView.id]: decrypted }));
+            // Store the decrypted password in state for display
+            setViewPassword((prev) => ({
+                ...prev,
+                [passwordToView.id]: decrypted,
+            }));
             setOpenDecryptDialog(false);
             setDecryptPasswordInput('');
         }
     };
 
+    // Handle "Edit" button click for a password entry
     const handleEdit = (entry) => {
         setSelectedPassword(entry);
         setOpenEditDialog(true);
     };
 
+    // Prompt to confirm password deletion
     const promptDeletePassword = (id) => {
-        setItemToDeleteId(id);
-        setPasswordToConfirmDelete('');
+        setItemToDeleteId(id); // Store the ID of the password to delete
+        setPasswordToConfirmDelete(''); // Clear previous input
         setDeleteError('');
-        setOpenDeleteDialog(true);
+        setOpenDeleteDialog(true); // Show the delete confirmation dialog
     };
 
+    // Confirm deletion of a password after reauthentication
+    const handleConfirmDelete = async () => {
+        const user = auth.currentUser;
 
+        // Require user to input their password to proceed
+        if (!passwordToConfirmDelete) {
+            setDeleteError('Password is required.');
+            return;
+        }
 
-const handleConfirmDelete = async () => {
-    const user = auth.currentUser;
+        // Create Firebase credential for reauthentication
+        const credential = EmailAuthProvider.credential(
+            user.email,
+            passwordToConfirmDelete
+        );
 
-    if (!passwordToConfirmDelete) {
-        setDeleteError('Password is required.');
-        return;
-    }
+        try {
+            // Reauthenticate user
+            await reauthenticateWithCredential(user, credential);
 
-    const credential = EmailAuthProvider.credential(user.email, passwordToConfirmDelete);
+            // Delete the password entry from Firestore
+            await deleteDoc(doc(db, 'passwordVault', itemToDeleteId));
 
-    try {
-        await reauthenticateWithCredential(user, credential);
-        await deleteDoc(doc(db, 'passwordVault', itemToDeleteId));
-        setPasswords(passwords.filter((password) => password.id !== itemToDeleteId));
-        setOpenDeleteDialog(false);
-    } catch (error) {
-        console.error('Error during reauthentication or deletion:', error);
-        setDeleteError('Incorrect password or failed to delete. Please try again.');
-    }
-};
+            // Remove the password from local state
+            setPasswords(passwords.filter((password) => password.id !== itemToDeleteId));
+
+            setOpenDeleteDialog(false); // Close the dialog
+        } catch (error) {
+            console.error('Error during reauthentication or deletion:', error);
+            setDeleteError('Incorrect password or failed to delete. Please try again.');
+        }
+    };
+
 
 
 

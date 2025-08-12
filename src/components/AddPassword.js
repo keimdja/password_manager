@@ -17,35 +17,113 @@ const AddPassword = ({ setActiveComponent }) => {
     const [dialogPassword, setDialogPassword] = useState('');
     const [dialogError, setDialogError] = useState('');
 
+    // const generateSecurePassword = () => {
+    //     const newPassword = Math.random().toString(36).slice(-8);
+    //     setPassword(newPassword);
+    // };
+
+
+    // const handlePasswordVisibility = () => {
+    //     setShowPassword(!showPassword);
+    // };
+
+
+    // const handleSavePassword = () => {
+    //     setOpenDialog(true);
+    // };
+
+    // const handleDialogSave = async () => {
+    //     setDialogError('');
+    //     const userId = auth.currentUser?.uid;
+
+    //     // Inside handleDialogSave:
+    //     console.log('userId:', userId);
+
+
+    //     try {
+
+    //         // Inside handleDialogSave:
+    //         console.log('userId:', userId);
+
+    //         const secretKeyDoc = await getDocs(query(collection(db, 'userSecrets'), where('userId', '==', userId)));
+    //         if (secretKeyDoc.empty) {
+    //             setDialogError('Secret key not found.');
+    //             return;
+    //         }
+
+    //         const secretKeyData = secretKeyDoc.docs[0].data();
+    //         const encryptedSecretKey = secretKeyData.encryptedSecretKey;
+
+    //         const decryptedSecretKey = CryptoJS.AES.decrypt(encryptedSecretKey, dialogPassword).toString(CryptoJS.enc.Utf8);
+
+    //         if (!decryptedSecretKey) {
+    //             setDialogError('Incorrect password.');
+    //             return;
+    //         }
+
+    //         const encryptedPassword = CryptoJS.AES.encrypt(password, decryptedSecretKey).toString();
+
+    //         await addDoc(collection(db, 'passwordVault'), {
+    //             userId,
+    //             serviceName: service,
+    //             usernameOrEmail: username,
+    //             encryptedPassword,
+    //             createdAt: serverTimestamp(),
+    //         });
+
+    //         alert('Password saved successfully!');
+    //         setOpenDialog(false);
+    //         setService('');
+    //         setUsername('');
+    //         setPassword('');
+    //         setActiveComponent('Password Vault');
+
+    //         // Inside handleDialogSave:
+    //         console.log('userId:', userId);
+    //         console.log('request.resource.data:', { userId, serviceName: service, usernameOrEmail: username, encryptedPassword });
+    //         console.log('request.auth.uid:', auth.currentUser?.uid);
+    //     } catch (error) {
+    //         // Inside handleDialogSave:
+    //         console.log('userId:', userId);
+
+    //         console.log('request.auth.uid:', auth.currentUser?.uid);
+    //         console.error('Error saving password:', error);
+    //         setDialogError('An error occurred.');
+    //     }
+    // };
+
+    // const handleCancel = () => {
+    //     setActiveComponent('Password Vault');
+    // };
+
+    // Generate a random 8-character secure password
     const generateSecurePassword = () => {
         const newPassword = Math.random().toString(36).slice(-8);
         setPassword(newPassword);
     };
-    
 
+    // Toggle password visibility in the UI
     const handlePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
 
-
+    // Open the password confirmation dialog
     const handleSavePassword = () => {
         setOpenDialog(true);
     };
 
+    // Handle saving the new password after user enters their account password
     const handleDialogSave = async () => {
         setDialogError('');
         const userId = auth.currentUser?.uid;
 
-        // Inside handleDialogSave:
-        console.log('userId:', userId);
-
-
         try {
+            // Retrieve the encrypted secret key for the user from Firestore
+            const secretKeyDoc = await getDocs(
+                query(collection(db, 'userSecrets'), where('userId', '==', userId))
+            );
 
-            // Inside handleDialogSave:
-            console.log('userId:', userId);
-
-            const secretKeyDoc = await getDocs(query(collection(db, 'userSecrets'), where('userId', '==', userId)));
+            // Check if secret key exists
             if (secretKeyDoc.empty) {
                 setDialogError('Secret key not found.');
                 return;
@@ -54,15 +132,19 @@ const AddPassword = ({ setActiveComponent }) => {
             const secretKeyData = secretKeyDoc.docs[0].data();
             const encryptedSecretKey = secretKeyData.encryptedSecretKey;
 
+            // Decrypt the secret key using the user's account password
             const decryptedSecretKey = CryptoJS.AES.decrypt(encryptedSecretKey, dialogPassword).toString(CryptoJS.enc.Utf8);
 
+            // If decryption fails (wrong password)
             if (!decryptedSecretKey) {
                 setDialogError('Incorrect password.');
                 return;
             }
 
+            // Encrypt the user's password for this service
             const encryptedPassword = CryptoJS.AES.encrypt(password, decryptedSecretKey).toString();
 
+            // Save the encrypted password and metadata to Firestore
             await addDoc(collection(db, 'passwordVault'), {
                 userId,
                 serviceName: service,
@@ -72,29 +154,24 @@ const AddPassword = ({ setActiveComponent }) => {
             });
 
             alert('Password saved successfully!');
+
+            // Reset dialog and form state
             setOpenDialog(false);
             setService('');
             setUsername('');
             setPassword('');
             setActiveComponent('Password Vault');
 
-            // Inside handleDialogSave:
-            console.log('userId:', userId);
-            console.log('request.resource.data:', { userId, serviceName: service, usernameOrEmail: username, encryptedPassword });
-            console.log('request.auth.uid:', auth.currentUser?.uid);
         } catch (error) {
-            // Inside handleDialogSave:
-            console.log('userId:', userId);
-
-            console.log('request.auth.uid:', auth.currentUser?.uid);
-            console.error('Error saving password:', error);
             setDialogError('An error occurred.');
         }
     };
 
+    // Cancel adding a new password
     const handleCancel = () => {
         setActiveComponent('Password Vault');
     };
+
 
     return (
         <Box
@@ -317,64 +394,64 @@ const AddPassword = ({ setActiveComponent }) => {
             </Box>
 
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-    <DialogTitle sx={{ color: '#654450', textAlign: 'center' }}>
-        Enter Your Password
-    </DialogTitle>
-    <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 2 }}>
-            <DialogContentText sx={{ textAlign: 'center' }}>
-                Please enter your password to save the new password.
-            </DialogContentText>
-            <TextField
-                autoFocus
-                margin="dense"
-                label="Password"
-                type="password"
-                fullWidth
-                value={dialogPassword}
-                onChange={(e) => setDialogPassword(e.target.value)}
-                error={!!dialogError}
-                helperText={dialogError}
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-                <Button
-                    variant="outlined"
-                    sx={{
-                        backgroundColor: '#F0E8D9',
-                        color: '#000',
-                        borderRadius: '20px',
-                        border: '1px solid #BA8477',
-                        textTransform: 'none',
-                        px: 3,
-                        ':hover': {
-                            backgroundColor: '#BA8477',
-                            color: '#FFF',
-                        },
-                    }}
-                    onClick={() => setOpenDialog(false)}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="contained"
-                    sx={{
-                        backgroundColor: '#BA8477',
-                        color: '#FFF',
-                        borderRadius: '20px',
-                        textTransform: 'none',
-                        px: 3,
-                        ':hover': {
-                            backgroundColor: '#966868',
-                        },
-                    }}
-                    onClick={handleDialogSave}
-                >
-                    Save
-                </Button>
-            </Box>
-        </Box>
-    </DialogContent>
-</Dialog>
+                <DialogTitle sx={{ color: '#654450', textAlign: 'center' }}>
+                    Enter Your Password
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 2 }}>
+                        <DialogContentText sx={{ textAlign: 'center' }}>
+                            Please enter your password to save the new password.
+                        </DialogContentText>
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            label="Password"
+                            type="password"
+                            fullWidth
+                            value={dialogPassword}
+                            onChange={(e) => setDialogPassword(e.target.value)}
+                            error={!!dialogError}
+                            helperText={dialogError}
+                        />
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                            <Button
+                                variant="outlined"
+                                sx={{
+                                    backgroundColor: '#F0E8D9',
+                                    color: '#000',
+                                    borderRadius: '20px',
+                                    border: '1px solid #BA8477',
+                                    textTransform: 'none',
+                                    px: 3,
+                                    ':hover': {
+                                        backgroundColor: '#BA8477',
+                                        color: '#FFF',
+                                    },
+                                }}
+                                onClick={() => setOpenDialog(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    backgroundColor: '#BA8477',
+                                    color: '#FFF',
+                                    borderRadius: '20px',
+                                    textTransform: 'none',
+                                    px: 3,
+                                    ':hover': {
+                                        backgroundColor: '#966868',
+                                    },
+                                }}
+                                onClick={handleDialogSave}
+                            >
+                                Save
+                            </Button>
+                        </Box>
+                    </Box>
+                </DialogContent>
+            </Dialog>
 
         </Box>
 
